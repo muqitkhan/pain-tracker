@@ -1,6 +1,6 @@
 """
 final_report.py — Daily consolidation report
-Reads morning/afternoon/evening JSON reports, finds common patterns,
+Reads morning/evening JSON reports, finds common patterns,
 sends a clean HTML email summary at ~8:30 PM Central Time
 
 New in this version
@@ -23,7 +23,7 @@ from zoneinfo import ZoneInfo
 import google.generativeai as genai
 
 
-SESSIONS = ["morning", "afternoon", "evening"]
+SESSIONS = ["morning", "evening"]
 
 LOCAL_TZ = ZoneInfo(os.environ.get("LOCAL_TZ", "America/Chicago"))
 
@@ -238,7 +238,7 @@ def cat_badge(category):
 
 
 def session_dot(session):
-    colors = {"morning": "#f59e0b", "afternoon": "#3b82f6", "evening": "#8b5cf6"}
+    colors = {"morning": "#f59e0b", "evening": "#8b5cf6"}
     c = colors.get(session, "#6b7280")
     return f'<span style="color:{c};font-weight:600;">● {session.capitalize()}</span>'
 
@@ -380,7 +380,6 @@ def build_html_email(date, reports, analysis, video_signals, always_empty, any_e
 
     session_colors = {
         "morning":   ("#fffbeb", "#92400e", "#f59e0b"),
-        "afternoon": ("#eff6ff", "#1e3a8a", "#3b82f6"),
         "evening":   ("#f5f3ff", "#3b0764", "#8b5cf6"),
     }
 

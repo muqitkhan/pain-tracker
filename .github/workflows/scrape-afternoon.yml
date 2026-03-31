@@ -1,10 +1,6 @@
-name: Afternoon Report (1:00 PM Central)
+name: Afternoon Report (Manual Only)
 
 on:
-  schedule:
-    # 1:00 PM America/Chicago can be either UTC-5 (CDT) or UTC-6 (CST).
-    - cron: "0 18 * * *"
-    - cron: "0 19 * * *"
   workflow_dispatch:
 
 permissions:
@@ -15,7 +11,7 @@ env:
 
 jobs:
   scrape:
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.RUNS_ON || 'ubuntu-latest' }}
     timeout-minutes: 60
     steps:
       - name: Guard: run only at 13:00 Central
@@ -85,4 +81,3 @@ jobs:
           git commit -m "Add ${SESSION} report for ${LOCAL_DATE}"
           git pull --rebase
           git push
-

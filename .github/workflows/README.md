@@ -19,6 +19,31 @@ consolidated email report at 8:30 PM Central Time (America/Chicago) every night.
 
 ---
 
+## ✅ Free Running Options (No Actions Minutes)
+
+GitHub-hosted runners are **free for public repos**, but **limited for private repos**.
+Pick one of these two free options:
+
+### Option A — Make the Repo Public (Fastest)
+
+1. Go to **Repo Settings → General → Change repository visibility**.
+2. Set the repo to **Public**.
+
+This gives **unlimited GitHub-hosted minutes** for Actions.
+Secrets still **won’t be exposed to forks** (GitHub blocks secrets on forked PRs).
+
+### Option B — Keep It Private + Use a Self‑Hosted Runner
+
+1. Go to **Repo Settings → Actions → Runners → New self-hosted runner** and follow the setup steps on your machine.
+2. Set this repo variable to use your runner:
+   - **Settings → Secrets and variables → Actions → Variables → New repository variable**
+   - Name: `RUNS_ON`
+   - Value: `self-hosted`
+
+Once set, all workflows will run on your machine for free.
+
+---
+
 ## 🕐 Gap Coverage — How Time Windows Work
 
 Each scrape session runs **two passes** on every subreddit:

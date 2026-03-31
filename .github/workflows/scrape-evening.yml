@@ -15,7 +15,7 @@ env:
 
 jobs:
   scrape:
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.RUNS_ON || 'ubuntu-latest' }}
     timeout-minutes: 60
     steps:
       - name: Guard: run only at 18:00 Central
