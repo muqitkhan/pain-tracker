@@ -1,0 +1,8 @@
+# Local secrets files (never commit)
+.env.secrets.local
+.env
+
+# Python cache
+__pycache__/
+*.pyc
+

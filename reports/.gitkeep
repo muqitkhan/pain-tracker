@@ -1,0 +1,2 @@
+# This file keeps the reports/ directory tracked by git.
+# Daily JSON reports will be auto-committed here by GitHub Actions.
