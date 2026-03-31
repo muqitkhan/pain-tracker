@@ -1,18 +1,18 @@
 {
   "session": "evening",
   "date": "2026-03-31",
-  "generated_at": "2026-03-31T23:21:43.968962+00:00",
+  "generated_at": "2026-03-31T23:31:02.917059+00:00",
   "time_window": {
     "since_utc": 1774980000.0,
     "since_readable": "2026-03-31 13:00 CDT"
   },
   "stats": {
     "subreddits_scraped": 60,
-    "subreddits_with_results": 60,
+    "subreddits_with_results": 56,
     "subreddits_empty": 0,
-    "subreddits_errored": 0,
-    "total_posts_collected": 1243,
-    "problem_signal_posts": 300,
+    "subreddits_errored": 4,
+    "total_posts_collected": 1148,
+    "problem_signal_posts": 272,
     "sent_to_ai": 70
   },
   "coverage": {
@@ -66,10 +66,10 @@
     "Anxiety": "ok",
     "depression": "ok",
     "loseit": "ok",
-    "nutrition": "ok",
-    "offmychest": "ok",
-    "Entrepreneur": "ok",
-    "careerguidance": "ok",
+    "nutrition": "error:HTTPError: 429 Client Error: Too Many Requests for url: https://www.reddit.com/r/nutrition/hot/.rss",
+    "offmychest": "error:HTTPError: 429 Client Error: Too Many Requests for url: https://www.reddit.com/r/offmychest/hot/.rss",
+    "Entrepreneur": "error:HTTPError: 429 Client Error: Too Many Requests for url: https://www.reddit.com/r/Entrepreneur/hot/.rss",
+    "careerguidance": "error:HTTPError: 429 Client Error: Too Many Requests for url: https://www.reddit.com/r/careerguidance/hot/.rss",
     "InternetIsBeautiful": "ok",
     "SideProject": "ok",
     "indiehackers": "ok",
