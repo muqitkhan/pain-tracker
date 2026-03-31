@@ -5,6 +5,7 @@ on:
     # 6:00 PM America/Chicago can be either UTC-5 (CDT) or UTC-6 (CST).
     - cron: "0 23 * * *"
     - cron: "0 0 * * *"
+  workflow_dispatch: {}
 
 permissions:
   contents: write
@@ -22,6 +23,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          if [ "${GITHUB_EVENT_NAME:-}" = "workflow_dispatch" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           h="$(TZ=America/Chicago date +%H)"
           m="$(TZ=America/Chicago date +%M)"
           if [ "$h" = "18" ] && [ "$m" = "00" ]; then
