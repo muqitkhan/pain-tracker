@@ -1,7 +1,7 @@
 name: Afternoon Report (Manual Only)
 
 on:
-  workflow_dispatch:
+  workflow_dispatch: {}
 
 permissions:
   contents: write
