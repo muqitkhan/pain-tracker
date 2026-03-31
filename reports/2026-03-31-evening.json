@@ -1,18 +1,18 @@
 {
   "session": "evening",
   "date": "2026-03-31",
-  "generated_at": "2026-03-31T22:36:35.233934+00:00",
+  "generated_at": "2026-03-31T22:51:18.565555+00:00",
   "time_window": {
     "since_utc": 1774980000.0,
     "since_readable": "2026-03-31 13:00 CDT"
   },
   "stats": {
     "subreddits_scraped": 60,
-    "subreddits_with_results": 50,
+    "subreddits_with_results": 58,
     "subreddits_empty": 0,
-    "subreddits_errored": 10,
-    "total_posts_collected": 1024,
-    "problem_signal_posts": 245,
+    "subreddits_errored": 2,
+    "total_posts_collected": 1192,
+    "problem_signal_posts": 284,
     "sent_to_ai": 70
   },
   "coverage": {
@@ -68,14 +68,14 @@
     "loseit": "ok",
     "nutrition": "error:HTTPError: 429 Client Error: Too Many Requests for url: https://www.reddit.com/r/nutrition/hot/.rss",
     "offmychest": "error:HTTPError: 429 Client Error: Too Many Requests for url: https://www.reddit.com/r/offmychest/hot/.rss",
-    "Entrepreneur": "error:HTTPError: 429 Client Error: Too Many Requests for url: https://www.reddit.com/r/Entrepreneur/hot/.rss",
-    "careerguidance": "error:HTTPError: 429 Client Error: Too Many Requests for url: https://www.reddit.com/r/careerguidance/hot/.rss",
-    "InternetIsBeautiful": "error:HTTPError: 429 Client Error: Too Many Requests for url: https://www.reddit.com/r/InternetIsBeautiful/hot/.rss",
-    "SideProject": "error:HTTPError: 429 Client Error: Too Many Requests for url: https://www.reddit.com/r/SideProject/hot/.rss",
-    "indiehackers": "error:HTTPError: 429 Client Error: Too Many Requests for url: https://www.reddit.com/r/indiehackers/hot/.rss",
-    "Landlord": "error:HTTPError: 429 Client Error: Too Many Requests for url: https://www.reddit.com/r/Landlord/hot/.rss",
-    "accounting": "error:HTTPError: 429 Client Error: Too Many Requests for url: https://www.reddit.com/r/accounting/hot/.rss",
-    "humanresources": "error:HTTPError: 429 Client Error: Too Many Requests for url: https://www.reddit.com/r/humanresources/hot/.rss"
+    "Entrepreneur": "ok",
+    "careerguidance": "ok",
+    "InternetIsBeautiful": "ok",
+    "SideProject": "ok",
+    "indiehackers": "ok",
+    "Landlord": "ok",
+    "accounting": "ok",
+    "humanresources": "ok"
   },
   "top_10_problems": [],
   "video_signals": []
