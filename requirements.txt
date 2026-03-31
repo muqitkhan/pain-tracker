@@ -2,3 +2,4 @@ praw
 google-generativeai
 google-api-python-client
 requests
+groq

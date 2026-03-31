@@ -2,6 +2,7 @@
 .env.secrets.local
 .env.secrets
 .env.secrets.*
+!.env.secrets.template
 .env
 
 # macOS
