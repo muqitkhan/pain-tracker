@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
-      - name: Guard: run only at 13:00 Central
+      - name: Guard - run only at 13:00 Central
         id: guard
         shell: bash
         run: |
@@ -27,7 +27,7 @@ jobs:
             echo "run=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Guard: skip if required secrets missing
+      - name: Guard - skip if required secrets missing
         id: secrets
         if: steps.guard.outputs.run == 'true'
         shell: bash

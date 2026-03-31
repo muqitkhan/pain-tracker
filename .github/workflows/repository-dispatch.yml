@@ -14,7 +14,7 @@ jobs:
     env:
       REDDIT_MODE: rss
     steps:
-      - name: Guard: skip if required secrets missing
+      - name: Guard - skip if required secrets missing
         id: secrets
         shell: bash
         env:
