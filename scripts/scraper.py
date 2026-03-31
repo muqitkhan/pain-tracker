@@ -391,6 +391,36 @@ Reddit posts to analyze:
     return []
 
 
+def build_fallback_top(posts, n=10):
+    """
+    Build a simple top-N list from raw posts when AI fails or returns nothing.
+    """
+    ranked = sorted(
+        posts,
+        key=lambda x: x.get("score", 0) + x.get("num_comments", 0) * 2,
+        reverse=True,
+    )
+    out = []
+    for i, p in enumerate(ranked[:n], start=1):
+        body = (p.get("body") or "").strip()
+        quote = (body or p.get("title", ""))[:130]
+        out.append({
+            "rank": i,
+            "problem_summary": (p.get("title") or "No title")[:160],
+            "category": "Other",
+            "severity": "Medium",
+            "solution_hint": "Manual review recommended",
+            "evidence_quote": quote,
+            "source_url": p.get("url", ""),
+            "subreddit": p.get("subreddit", ""),
+            "post_title": p.get("title", ""),
+            "upvotes": p.get("score", 0),
+            "num_comments": p.get("num_comments", 0),
+            "search_keywords": "",
+        })
+    return out
+
+
 # ──────────────────────────────────────────────────────────────────────────────
 # YouTube search  (official Data API v3)
 # ──────────────────────────────────────────────────────────────────────────────
@@ -744,6 +774,10 @@ def main():
 
     # ── Step 3: Gemini AI analysis ────────────────────────────────────────────
     top_10 = analyze_with_gemini(candidates, session)
+    if not top_10 or len(top_10) < 10:
+        print("WARNING: AI returned no usable problems. Falling back to top posts.")
+        fallback_source = candidates if candidates else all_posts
+        top_10 = build_fallback_top(fallback_source, n=10)
 
     # ── Step 4: Video signals ─────────────────────────────────────────────────
     video_signals = []
