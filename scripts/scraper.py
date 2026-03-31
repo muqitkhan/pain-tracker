@@ -171,6 +171,56 @@ def scrape_subreddit_rss(subreddit_name, since_utc=None, hot_limit=12, new_limit
     return posts, ("ok" if posts else "empty")
 
 
+def _listing_to_post(item, subreddit_name):
+    data = item.get("data", {})
+    permalink = data.get("permalink", "")
+    url = f"https://reddit.com{permalink}" if permalink else data.get("url", "")
+    return {
+        "title": data.get("title", "").strip(),
+        "body": (data.get("selftext") or "")[:400].replace("\n", " "),
+        "score": int(data.get("score", 0) or 0),
+        "num_comments": int(data.get("num_comments", 0) or 0),
+        "url": url,
+        "subreddit": subreddit_name,
+        "created_utc": float(data.get("created_utc", 0) or 0),
+        "top_comments": [],
+    }
+
+
+def scrape_subreddit_public_json(subreddit_name, since_utc=None, hot_limit=12, new_limit=30):
+    """
+    Public JSON listing (no auth required).
+    Uses /hot.json and /new.json, dedupes by URL.
+    """
+    headers = {
+        "User-Agent": "PainPointTracker/1.0 (public json; contact: personal-use)",
+        "Accept": "application/json",
+    }
+    seen = {}
+    try:
+        feeds = [
+            (f"https://www.reddit.com/r/{subreddit_name}/hot.json?limit={hot_limit}", False),
+            (f"https://www.reddit.com/r/{subreddit_name}/new.json?limit={new_limit}", True),
+        ]
+        for url, time_filter in feeds:
+            resp = requests.get(url, headers=headers, timeout=15)
+            resp.raise_for_status()
+            payload = resp.json()
+            items = payload.get("data", {}).get("children", [])
+            for item in items:
+                post = _listing_to_post(item, subreddit_name)
+                if time_filter and since_utc and post["created_utc"] and post["created_utc"] < since_utc:
+                    continue
+                key = post["url"] or f"{subreddit_name}:{post['title']}"
+                seen[key] = post
+            time.sleep(0.4)
+    except Exception as exc:
+        return [], f"error:{type(exc).__name__}: {exc}"
+
+    posts = list(seen.values())
+    return posts, ("ok" if posts else "empty")
+
+
 def _post_to_dict(post, subreddit_name):
     post.comments.replace_more(limit=0)
     top_comments = []
@@ -238,11 +288,12 @@ def resolve_reddit_mode():
     """
     REDDIT_MODE:
       - api: require Reddit API credentials
+      - public: use public JSON listing (no auth)
       - rss: force RSS fallback
-      - auto (default): use API when creds exist, else RSS fallback
+      - auto (default): use API when creds exist, else public JSON
     """
     requested = os.environ.get("REDDIT_MODE", "auto").strip().lower()
-    if requested not in {"api", "rss", "auto"}:
+    if requested not in {"api", "public", "rss", "auto"}:
         requested = "auto"
 
     has_api_creds = all(
@@ -252,9 +303,11 @@ def resolve_reddit_mode():
 
     if requested == "rss":
         return "rss"
+    if requested == "public":
+        return "public"
     if requested == "api":
         return "api"
-    return "api" if has_api_creds else "rss"
+    return "api" if has_api_creds else "public"
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -644,6 +697,10 @@ def main():
         print(f"[{i+1:02d}/{len(subreddits)}] r/{sub}", end="  ")
         if source_mode == "api" and reddit is not None:
             posts, status = scrape_subreddit(reddit, sub, since_utc=since_utc)
+        elif source_mode == "public":
+            posts, status = scrape_subreddit_public_json(sub, since_utc=since_utc)
+            if status.startswith("error"):
+                posts, status = scrape_subreddit_rss(sub, since_utc=since_utc)
         else:
             posts, status = scrape_subreddit_rss(sub, since_utc=since_utc)
         coverage[sub] = status
