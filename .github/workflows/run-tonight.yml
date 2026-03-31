@@ -2,7 +2,6 @@ name: Run Tonight End-to-End (Manual)
 
 on:
   workflow_dispatch: {}
-  workflow_call: {}
 
 permissions:
   contents: write
