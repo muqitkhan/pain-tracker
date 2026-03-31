@@ -8,7 +8,7 @@ permissions:
 
 jobs:
   tonight:
-    runs-on: ${{ vars.RUNS_ON || 'ubuntu-latest' }}
+    runs-on: ubuntu-latest
     timeout-minutes: 180
     env:
       REDDIT_MODE: rss
