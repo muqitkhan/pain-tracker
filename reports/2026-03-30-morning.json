@@ -1,7 +1,7 @@
 {
   "session": "morning",
   "date": "2026-03-30",
-  "generated_at": "2026-03-31T04:34:20.564624+00:00",
+  "generated_at": "2026-03-31T04:41:40.684834+00:00",
   "time_window": {
     "since_utc": 1774825200.0,
     "since_readable": "2026-03-29 18:00 CDT"
@@ -11,8 +11,8 @@
     "subreddits_with_results": 50,
     "subreddits_empty": 0,
     "subreddits_errored": 10,
-    "total_posts_collected": 1216,
-    "problem_signal_posts": 302,
+    "total_posts_collected": 1215,
+    "problem_signal_posts": 299,
     "sent_to_ai": 70
   },
   "coverage": {
