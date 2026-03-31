@@ -1,18 +1,18 @@
 {
   "session": "evening",
   "date": "2026-03-31",
-  "generated_at": "2026-03-31T22:51:18.565555+00:00",
+  "generated_at": "2026-03-31T23:21:43.968962+00:00",
   "time_window": {
     "since_utc": 1774980000.0,
     "since_readable": "2026-03-31 13:00 CDT"
   },
   "stats": {
     "subreddits_scraped": 60,
-    "subreddits_with_results": 58,
+    "subreddits_with_results": 60,
     "subreddits_empty": 0,
-    "subreddits_errored": 2,
-    "total_posts_collected": 1192,
-    "problem_signal_posts": 284,
+    "subreddits_errored": 0,
+    "total_posts_collected": 1243,
+    "problem_signal_posts": 300,
     "sent_to_ai": 70
   },
   "coverage": {
@@ -66,8 +66,8 @@
     "Anxiety": "ok",
     "depression": "ok",
     "loseit": "ok",
-    "nutrition": "error:HTTPError: 429 Client Error: Too Many Requests for url: https://www.reddit.com/r/nutrition/hot/.rss",
-    "offmychest": "error:HTTPError: 429 Client Error: Too Many Requests for url: https://www.reddit.com/r/offmychest/hot/.rss",
+    "nutrition": "ok",
+    "offmychest": "ok",
     "Entrepreneur": "ok",
     "careerguidance": "ok",
     "InternetIsBeautiful": "ok",
@@ -77,6 +77,193 @@
     "accounting": "ok",
     "humanresources": "ok"
   },
-  "top_10_problems": [],
-  "video_signals": []
+  "top_10_problems": [
+    {
+      "rank": 1,
+      "problem_summary": "Failed again",
+      "category": "Other",
+      "severity": "Medium",
+      "solution_hint": "Manual review recommended",
+      "evidence_quote": "I started my photography business many months back. Did it the right way, registered LLC, created website, created portfolio, Face",
+      "source_url": "https://www.reddit.com/r/smallbusiness/comments/1s8bno5/failed_again.json",
+      "subreddit": "smallbusiness",
+      "post_title": "Failed again",
+      "upvotes": 1,
+      "num_comments": 0,
+      "search_keywords": ""
+    },
+    {
+      "rank": 2,
+      "problem_summary": "This is not a promotion it's an invitation to test a platform I made for small businesses, introducing Rebooked.",
+      "category": "Other",
+      "severity": "Medium",
+      "solution_hint": "Manual review recommended",
+      "evidence_quote": "Hi everyone my name is Brendan, and I developed a platform to fill schedule gappage, decrease revenue leakage, and efficiently inc",
+      "source_url": "https://www.reddit.com/r/smallbusiness/comments/1s91wcu/this_is_not_a_promotion_its_an_invitation_to_test.json",
+      "subreddit": "smallbusiness",
+      "post_title": "This is not a promotion it's an invitation to test a platform I made for small businesses, introducing Rebooked.",
+      "upvotes": 1,
+      "num_comments": 0,
+      "search_keywords": ""
+    },
+    {
+      "rank": 3,
+      "problem_summary": "At what point does a \u201csmall issue\u201d become a real cost in your business?",
+      "category": "Other",
+      "severity": "Medium",
+      "solution_hint": "Manual review recommended",
+      "evidence_quote": "Hey everyone, I work as a technician (mostly on vending machines), and over the years I\u2019ve noticed something that I\u2019m curious if i",
+      "source_url": "https://www.reddit.com/r/smallbusiness/comments/1s90346/at_what_point_does_a_small_issue_become_a_real.json",
+      "subreddit": "smallbusiness",
+      "post_title": "At what point does a \u201csmall issue\u201d become a real cost in your business?",
+      "upvotes": 1,
+      "num_comments": 0,
+      "search_keywords": ""
+    },
+    {
+      "rank": 4,
+      "problem_summary": "Questions about international work",
+      "category": "Other",
+      "severity": "Medium",
+      "solution_hint": "Manual review recommended",
+      "evidence_quote": "Hello. I\u2019m a student in uni needing to interview people regarding global trade. Let me know if anyone is interested in answers the",
+      "source_url": "https://www.reddit.com/r/smallbusiness/comments/1s9021m/questions_about_international_work.json",
+      "subreddit": "smallbusiness",
+      "post_title": "Questions about international work",
+      "upvotes": 1,
+      "num_comments": 0,
+      "search_keywords": ""
+    },
+    {
+      "rank": 5,
+      "problem_summary": "Anyone built a coaching/mentoring offer without formal coaching qualifications?",
+      "category": "Other",
+      "severity": "Medium",
+      "solution_hint": "Manual review recommended",
+      "evidence_quote": "I\u2019m exploring a mentoring/coaching-style service around learning, confidence, and helping people who struggle with traditional way",
+      "source_url": "https://www.reddit.com/r/smallbusiness/comments/1s8yf8y/anyone_built_a_coachingmentoring_offer_without.json",
+      "subreddit": "smallbusiness",
+      "post_title": "Anyone built a coaching/mentoring offer without formal coaching qualifications?",
+      "upvotes": 1,
+      "num_comments": 0,
+      "search_keywords": ""
+    },
+    {
+      "rank": 6,
+      "problem_summary": "Cookie business advice",
+      "category": "Other",
+      "severity": "Medium",
+      "solution_hint": "Manual review recommended",
+      "evidence_quote": "Hey everyone! I\u2019m in Houston and I\u2019ve been thinking about starting a small cookie business, but I honestly don\u2019t know where to sta",
+      "source_url": "https://www.reddit.com/r/smallbusiness/comments/1s8xrwj/cookie_business_advice.json",
+      "subreddit": "smallbusiness",
+      "post_title": "Cookie business advice",
+      "upvotes": 1,
+      "num_comments": 0,
+      "search_keywords": ""
+    },
+    {
+      "rank": 7,
+      "problem_summary": "What\u2019s actually working for you when following up with leads?",
+      "category": "Other",
+      "severity": "Medium",
+      "solution_hint": "Manual review recommended",
+      "evidence_quote": "Hey everyone, curious to hear what\u2019s been working lately when it comes to following up with leads. Do you guys stick to calls, tex",
+      "source_url": "https://www.reddit.com/r/smallbusiness/comments/1s8x1jm/whats_actually_working_for_you_when_following_up.json",
+      "subreddit": "smallbusiness",
+      "post_title": "What\u2019s actually working for you when following up with leads?",
+      "upvotes": 1,
+      "num_comments": 0,
+      "search_keywords": ""
+    },
+    {
+      "rank": 8,
+      "problem_summary": "Looking for poke investors that have the ability to invest in a potential franchise ( cool hybrid brick and mortar concept)",
+      "category": "Other",
+      "severity": "Medium",
+      "solution_hint": "Manual review recommended",
+      "evidence_quote": "I am looking for an investor to help me get an idea off the ground and help franchising in the future . I have this really cool co",
+      "source_url": "https://www.reddit.com/r/smallbusiness/comments/1s8wel5/looking_for_poke_investors_that_have_the_ability.json",
+      "subreddit": "smallbusiness",
+      "post_title": "Looking for poke investors that have the ability to invest in a potential franchise ( cool hybrid brick and mortar concept)",
+      "upvotes": 1,
+      "num_comments": 0,
+      "search_keywords": ""
+    },
+    {
+      "rank": 9,
+      "problem_summary": "What's your biggest problem right now?",
+      "category": "Other",
+      "severity": "Medium",
+      "solution_hint": "Manual review recommended",
+      "evidence_quote": "I genuinely want to help people. Not sell anything, not promote anything \u2014 just help. I&#39;m a builder and I&#39;ve realised the ",
+      "source_url": "https://www.reddit.com/r/Entrepreneurs/comments/1s90wkz/whats_your_biggest_problem_right_now.json",
+      "subreddit": "entrepreneurs",
+      "post_title": "What's your biggest problem right now?",
+      "upvotes": 1,
+      "num_comments": 0,
+      "search_keywords": ""
+    },
+    {
+      "rank": 10,
+      "problem_summary": "Want to start something of my own but feeling stuck need real advice",
+      "category": "Other",
+      "severity": "Medium",
+      "solution_hint": "Manual review recommended",
+      "evidence_quote": "Hey everyone, I\u2019ve been thinking a lot lately about starting something of my own, but honestly I feel stuck on what exactly to sta",
+      "source_url": "https://www.reddit.com/r/Entrepreneurs/comments/1s8xcr8/want_to_start_something_of_my_own_but_feeling.json",
+      "subreddit": "entrepreneurs",
+      "post_title": "Want to start something of my own but feeling stuck need real advice",
+      "upvotes": 1,
+      "num_comments": 0,
+      "search_keywords": ""
+    }
+  ],
+  "video_signals": [
+    {
+      "problem_rank": 1,
+      "problem_summary": "Failed again",
+      "search_keywords": "",
+      "youtube": [],
+      "tiktok": [],
+      "youtube_found": false,
+      "tiktok_found": false
+    },
+    {
+      "problem_rank": 2,
+      "problem_summary": "This is not a promotion it's an invitation to test a platform I made for small businesses, introducing Rebooked.",
+      "search_keywords": "",
+      "youtube": [],
+      "tiktok": [],
+      "youtube_found": false,
+      "tiktok_found": false
+    },
+    {
+      "problem_rank": 3,
+      "problem_summary": "At what point does a \u201csmall issue\u201d become a real cost in your business?",
+      "search_keywords": "",
+      "youtube": [],
+      "tiktok": [],
+      "youtube_found": false,
+      "tiktok_found": false
+    },
+    {
+      "problem_rank": 4,
+      "problem_summary": "Questions about international work",
+      "search_keywords": "",
+      "youtube": [],
+      "tiktok": [],
+      "youtube_found": false,
+      "tiktok_found": false
+    },
+    {
+      "problem_rank": 5,
+      "problem_summary": "Anyone built a coaching/mentoring offer without formal coaching qualifications?",
+      "search_keywords": "",
+      "youtube": [],
+      "tiktok": [],
+      "youtube_found": false,
+      "tiktok_found": false
+    }
+  ]
 }
