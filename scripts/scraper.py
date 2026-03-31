@@ -473,19 +473,22 @@ def build_fallback_top(posts, n=10):
     for i, p in enumerate(ranked[:n], start=1):
         body = (p.get("body") or "").strip()
         quote = (body or p.get("title", ""))[:130]
+        title = (p.get("title") or "").strip()
+        subreddit = p.get("subreddit", "")
+        keywords = title[:80] if title else f"{subreddit} problem"
         out.append({
             "rank": i,
-            "problem_summary": (p.get("title") or "No title")[:160],
+            "problem_summary": (title or "No title")[:160],
             "category": "Other",
             "severity": "Medium",
             "solution_hint": "Manual review recommended",
             "evidence_quote": quote,
             "source_url": p.get("url", ""),
-            "subreddit": p.get("subreddit", ""),
-            "post_title": p.get("title", ""),
+            "subreddit": subreddit,
+            "post_title": title,
             "upvotes": p.get("score", 0),
             "num_comments": p.get("num_comments", 0),
-            "search_keywords": "",
+            "search_keywords": keywords,
         })
     return out
 
