@@ -252,6 +252,8 @@ def build_html_email(date, reports, analysis, video_signals, always_empty, any_e
     total_scraped  = sum(r.get("stats", {}).get("total_posts_collected", 0) for r in reports.values())
     total_subs     = max((r.get("stats", {}).get("subreddits_scraped", 0) for r in reports.values()), default=0)
     validated_n    = len(analysis.get("top_validated_problems", [])) if analysis else 0
+    total_with_results = sum(r.get("stats", {}).get("subreddits_with_results", 0) for r in reports.values())
+    total_errored = sum(r.get("stats", {}).get("subreddits_errored", 0) for r in reports.values())
 
     # ── Header ────────────────────────────────────────────────────────────────
     html = f"""<!DOCTYPE html>
@@ -296,6 +298,30 @@ def build_html_email(date, reports, analysis, video_signals, always_empty, any_e
 
 <!-- MAIN CONTENT -->
 <tr><td style="background:#ffffff;padding:28px 32px;">
+"""
+
+    # ── Data Availability Notice ─────────────────────────────────────────────
+    if total_scraped == 0 or total_with_results == 0:
+        html += f"""
+<table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+<tr><td style="background:#fff7ed;border-left:4px solid #f97316;border-radius:0 8px 8px 0;padding:14px 18px;">
+  <p style="margin:0;font-size:11px;font-weight:700;color:#c2410c;text-transform:uppercase;letter-spacing:.06em;">Data Availability Notice</p>
+  <p style="margin:6px 0 0;font-size:13px;color:#7c2d12;line-height:1.6;">
+    We couldn't find usable data for this run. This usually means Reddit sources were empty or blocked.
+    The workflow completed and will try again on the next scheduled run.
+  </p>
+</td></tr></table>
+"""
+
+    if total_errored > 0:
+        html += f"""
+<table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+<tr><td style="background:#fef2f2;border-left:4px solid #dc2626;border-radius:0 8px 8px 0;padding:14px 18px;">
+  <p style="margin:0;font-size:11px;font-weight:700;color:#b91c1c;text-transform:uppercase;letter-spacing:.06em;">Coverage Errors</p>
+  <p style="margin:6px 0 0;font-size:13px;color:#7f1d1d;line-height:1.6;">
+    Some communities could not be reached in this run. We will keep trying in future runs.
+  </p>
+</td></tr></table>
 """
 
     # ── Key Insight ───────────────────────────────────────────────────────────
