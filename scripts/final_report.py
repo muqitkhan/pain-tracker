@@ -663,8 +663,16 @@ def main():
     reports = load_reports(today)
 
     if not reports:
-        print("No reports found for today. Exiting.")
-        sys.exit(1)
+        print("No reports found for today. Sending health check email.")
+        html = build_html_email(
+            today, {}, {}, [],
+            [], [], {},
+        )
+        subject = f"Pain Point Health Check — {today} | No Data"
+        print(f"Sending email to {os.environ['RECIPIENT_EMAIL']}...")
+        send_gmail(subject, html)
+        print("\nFinal report complete.\n")
+        return
 
     # ── Step 2: Aggregate coverage & video signals ─────────────────────────────
     print("\nAggregating coverage and video signals...")
@@ -691,7 +699,12 @@ def main():
 
     # ── Step 5: Send email ────────────────────────────────────────────────────
     validated_n = len((analysis or {}).get("top_validated_problems", []))
-    subject = f"Pain Point Report — {today} | {validated_n} Validated Problems"
+    total_scraped = sum(r.get("stats", {}).get("total_posts_collected", 0) for r in reports.values())
+    total_with_results = sum(r.get("stats", {}).get("subreddits_with_results", 0) for r in reports.values())
+    if total_scraped == 0 or total_with_results == 0:
+        subject = f"Pain Point Health Check — {today} | No Data"
+    else:
+        subject = f"Pain Point Report — {today} | {validated_n} Validated Problems"
     print(f"Sending email to {os.environ['RECIPIENT_EMAIL']}...")
     send_gmail(subject, html)
 
