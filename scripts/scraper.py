@@ -18,6 +18,7 @@ import re
 import sys
 import time
 import requests
+import random
 from datetime import datetime, timezone, timedelta
 from zoneinfo import ZoneInfo
 from xml.etree import ElementTree
@@ -153,7 +154,7 @@ def scrape_subreddit_rss(subreddit_name, since_utc=None, hot_limit=12, new_limit
             (f"https://www.reddit.com/r/{subreddit_name}/new/.rss", new_limit, True),
         ]
         for url, limit, time_filter in feeds:
-            resp = requests.get(url, headers=headers, timeout=15)
+            resp = _fetch_with_backoff(url, headers=headers, timeout=20)
             resp.raise_for_status()
             root = ElementTree.fromstring(resp.text)
             entries = root.findall("{http://www.w3.org/2005/Atom}entry")[:limit]
@@ -163,7 +164,7 @@ def scrape_subreddit_rss(subreddit_name, since_utc=None, hot_limit=12, new_limit
                     continue
                 key = post["url"] or f"{subreddit_name}:{post['title']}"
                 seen[key] = post
-            time.sleep(0.3)
+            _rate_sleep()
     except Exception as exc:
         return [], f"error:{type(exc).__name__}: {exc}"
 
@@ -203,7 +204,7 @@ def scrape_subreddit_public_json(subreddit_name, since_utc=None, hot_limit=12, n
             (f"https://www.reddit.com/r/{subreddit_name}/new.json?limit={new_limit}", True),
         ]
         for url, time_filter in feeds:
-            resp = requests.get(url, headers=headers, timeout=15)
+            resp = _fetch_with_backoff(url, headers=headers, timeout=20)
             resp.raise_for_status()
             payload = resp.json()
             items = payload.get("data", {}).get("children", [])
@@ -213,7 +214,7 @@ def scrape_subreddit_public_json(subreddit_name, since_utc=None, hot_limit=12, n
                     continue
                 key = post["url"] or f"{subreddit_name}:{post['title']}"
                 seen[key] = post
-            time.sleep(0.4)
+            _rate_sleep()
     except Exception as exc:
         return [], f"error:{type(exc).__name__}: {exc}"
 
@@ -240,6 +241,25 @@ def _post_to_dict(post, subreddit_name):
         "created_utc": post.created_utc,
         "top_comments": top_comments,
     }
+
+
+def _rate_sleep():
+    base = float(os.environ.get("REDDIT_MIN_DELAY_SEC", "1.2"))
+    jitter = float(os.environ.get("REDDIT_JITTER_SEC", "0.8"))
+    time.sleep(base + random.random() * jitter)
+
+
+def _fetch_with_backoff(url, headers=None, timeout=20, max_retries=3):
+    delay = float(os.environ.get("REDDIT_BACKOFF_SEC", "8"))
+    for attempt in range(max_retries + 1):
+        resp = requests.get(url, headers=headers, timeout=timeout)
+        if resp.status_code != 429:
+            return resp
+        if attempt < max_retries:
+            time.sleep(delay + random.random() * 2.0)
+            delay *= 2
+            continue
+        return resp
 
 
 # ──────────────────────────────────────────────────────────────────────────────
