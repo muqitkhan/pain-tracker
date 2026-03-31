@@ -53,6 +53,8 @@ jobs:
       - name: Checkout
         if: steps.guard.outputs.run == 'true' && steps.secrets.outputs.run == 'true'
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Setup Python
         if: steps.guard.outputs.run == 'true' && steps.secrets.outputs.run == 'true'

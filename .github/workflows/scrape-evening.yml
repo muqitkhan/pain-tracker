@@ -77,25 +77,7 @@ jobs:
         run: |
           python scripts/scraper.py "$SESSION"
 
-      - name: Commit & push report JSON
+      - name: Save report (no commit)
         if: steps.guard.outputs.run == 'true' && steps.secrets.outputs.run == 'true'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        shell: bash
         run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          LOCAL_DATE="$(TZ=America/Chicago date +%Y-%m-%d)"
-          REPORT_PATH="reports/${LOCAL_DATE}-${SESSION}.json"
-
-          git add "$REPORT_PATH"
-          if [ -z "$(git status --porcelain)" ]; then
-            echo "No report changes to commit."
-            exit 0
-          fi
-
-          git commit -m "Add ${SESSION} report for ${LOCAL_DATE}"
-          git pull --rebase
-          git push
+          echo "Report generated locally; not committing in public repo."
