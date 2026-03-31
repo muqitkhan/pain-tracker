@@ -31,27 +31,42 @@ jobs:
             echo "run=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Checkout
+      - name: Guard: skip if required secrets missing
+        id: secrets
         if: steps.guard.outputs.run == 'true'
+        shell: bash
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "${GEMINI_API_KEY:-}" ]; then
+            echo "Required secret GEMINI_API_KEY missing. Skipping run."
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout
+        if: steps.guard.outputs.run == 'true' && steps.secrets.outputs.run == 'true'
         uses: actions/checkout@v4
         with:
           persist-credentials: true
           fetch-depth: 0
 
       - name: Setup Python
-        if: steps.guard.outputs.run == 'true'
+        if: steps.guard.outputs.run == 'true' && steps.secrets.outputs.run == 'true'
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
       - name: Install dependencies
-        if: steps.guard.outputs.run == 'true'
+        if: steps.guard.outputs.run == 'true' && steps.secrets.outputs.run == 'true'
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
       - name: Run scraper
-        if: steps.guard.outputs.run == 'true'
+        if: steps.guard.outputs.run == 'true' && steps.secrets.outputs.run == 'true'
         env:
           REDDIT_MODE: rss
           REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
@@ -64,7 +79,7 @@ jobs:
           python scripts/scraper.py "$SESSION"
 
       - name: Commit & push report JSON
-        if: steps.guard.outputs.run == 'true'
+        if: steps.guard.outputs.run == 'true' && steps.secrets.outputs.run == 'true'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
@@ -85,4 +100,3 @@ jobs:
           git commit -m "Add ${SESSION} report for ${LOCAL_DATE}"
           git pull --rebase
           git push
-
