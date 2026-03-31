@@ -172,7 +172,7 @@ git push -u origin main
 2. Click **"Morning Report (8:00 AM Central)"** in the left panel
 3. Click **"Run workflow"** → **"Run workflow"**
 4. Watch it run (~8–12 minutes for all 60 subreddits)
-5. Then manually trigger **"Final Daily Report (8:30 PM Central)"** to test the email
+5. The final report will send automatically at **8:30 PM Central**
 
 ---
 
@@ -193,7 +193,6 @@ reddit-pain-tracker/
 ├── .github/
 │   └── workflows/
 │       ├── scrape-morning.yml  ← 8:00 AM Central
-│       ├── scrape-afternoon.yml  ← Manual only (disabled schedule)
 │       ├── scrape-evening.yml  ← 6:00 PM Central
 │       └── final-report.yml    ← 8:30 PM Central (email)
 ├── scripts/
