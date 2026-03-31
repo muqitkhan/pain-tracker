@@ -20,6 +20,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          if [ "${GITHUB_EVENT_NAME:-}" = "workflow_dispatch" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           h="$(TZ=America/Chicago date +%H)"
           m="$(TZ=America/Chicago date +%M)"
           if [ "$h" = "20" ] && [ "$m" = "30" ]; then
