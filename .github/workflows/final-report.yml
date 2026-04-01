@@ -96,9 +96,24 @@ jobs:
                       break
               if not match:
                   raise SystemExit(f"Artifact not found: {artifact_name}")
+              # Follow redirect manually without auth header to avoid 401 on storage URL.
               req = urllib.request.Request(match["archive_download_url"], headers=headers)
-              with urllib.request.urlopen(req) as r:
-                  data = r.read()
+              opener = urllib.request.build_opener(urllib.request.HTTPHandler())
+              try:
+                  with opener.open(req) as r:
+                      if r.status in (301, 302, 303, 307, 308):
+                          url = r.headers.get("Location")
+                          with urllib.request.urlopen(url) as r2:
+                              data = r2.read()
+                      else:
+                          data = r.read()
+              except urllib.error.HTTPError as e:
+                  if e.code in (301, 302, 303, 307, 308):
+                      url = e.headers.get("Location")
+                      with urllib.request.urlopen(url) as r2:
+                          data = r2.read()
+                  else:
+                      raise
               zf = zipfile.ZipFile(BytesIO(data))
               os.makedirs("reports", exist_ok=True)
               zf.extractall("reports")
@@ -141,9 +156,24 @@ jobs:
                       break
               if not match:
                   raise SystemExit(f"Artifact not found: {artifact_name}")
+              # Follow redirect manually without auth header to avoid 401 on storage URL.
               req = urllib.request.Request(match["archive_download_url"], headers=headers)
-              with urllib.request.urlopen(req) as r:
-                  data = r.read()
+              opener = urllib.request.build_opener(urllib.request.HTTPHandler())
+              try:
+                  with opener.open(req) as r:
+                      if r.status in (301, 302, 303, 307, 308):
+                          url = r.headers.get("Location")
+                          with urllib.request.urlopen(url) as r2:
+                              data = r2.read()
+                      else:
+                          data = r.read()
+              except urllib.error.HTTPError as e:
+                  if e.code in (301, 302, 303, 307, 308):
+                      url = e.headers.get("Location")
+                      with urllib.request.urlopen(url) as r2:
+                          data = r2.read()
+                  else:
+                      raise
               zf = zipfile.ZipFile(BytesIO(data))
               os.makedirs("reports", exist_ok=True)
               zf.extractall("reports")
