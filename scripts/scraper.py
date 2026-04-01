@@ -437,13 +437,19 @@ def resolve_reddit_mode():
 # Gemini AI analysis
 # ──────────────────────────────────────────────────────────────────────────────
 
+def _normalize_gemini_model(name):
+    if not name:
+        return ""
+    return name if name.startswith("models/") else f"models/{name}"
+
+
 def analyze_with_gemini(posts, session):
     """Send top candidate posts to Gemini; returns list of top-10 problem dicts."""
     genai.configure(api_key=os.environ["GEMINI_API_KEY"])
-    model_name = os.environ.get("GEMINI_MODEL") or "gemini-1.5-flash-latest"
-    model = genai.GenerativeModel(model_name)
+    model_name = os.environ.get("GEMINI_MODEL") or "gemini-1.5-flash-001"
+    model = genai.GenerativeModel(_normalize_gemini_model(model_name))
 
-    posts_json = json.dumps(posts, indent=2)[:22000]
+    posts_json = json.dumps(posts, indent=2)[:14000]
 
     prompt = f"""You are a senior product researcher. From these Reddit posts, \
 identify the TOP 10 that describe a REAL, SPECIFIC problem a software product or app could solve.
@@ -505,7 +511,7 @@ def analyze_with_groq(posts, session):
     model_name = os.environ.get("GROQ_MODEL") or "llama-3.1-8b-instant"
     client = Groq(api_key=api_key)
 
-    posts_json = json.dumps(posts, indent=2)[:22000]
+    posts_json = json.dumps(posts, indent=2)[:12000]
     prompt = f"""You are a senior product researcher. From these Reddit posts, \
 identify the TOP 10 that describe a REAL, SPECIFIC problem a software product or app could solve.
 
@@ -911,6 +917,9 @@ def search_youtube(query, max_results=3):
         ranked.sort(key=lambda x: x.get("complaint_score", 0), reverse=True)
         return ranked[:max_results]
     except Exception as exc:
+        msg = str(exc)
+        if "403" in msg:
+            print(f"  YouTube search failed (403). Check API key restrictions & enable YouTube Data API v3.")
         print(f"  YouTube search failed for '{query}': {exc}")
         return []
 
@@ -1103,7 +1112,7 @@ def main():
         key=lambda x: (x.get("score", 0) + x.get("num_comments", 0) * 2 + engagement_score(x) * 10),
         reverse=True,
     )
-    candidates = problem_posts[:70]
+    candidates = problem_posts[:40]
     print(f"Problem-signal posts: {len(problem_posts)}")
     print(f"Sending top {len(candidates)} to Gemini...\n")
 
