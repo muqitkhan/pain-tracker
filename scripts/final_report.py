@@ -150,7 +150,7 @@ def analyze_patterns(reports):
         return None
 
     genai.configure(api_key=os.environ["GEMINI_API_KEY"])
-    model_name = os.environ.get("GEMINI_MODEL", "gemini-1.5-flash-latest")
+    model_name = os.environ.get("GEMINI_MODEL") or "gemini-1.5-flash-latest"
     model = genai.GenerativeModel(model_name)
 
     data = json.dumps(all_problems, indent=2)[:22000]

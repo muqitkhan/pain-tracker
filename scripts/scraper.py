@@ -440,7 +440,7 @@ def resolve_reddit_mode():
 def analyze_with_gemini(posts, session):
     """Send top candidate posts to Gemini; returns list of top-10 problem dicts."""
     genai.configure(api_key=os.environ["GEMINI_API_KEY"])
-    model_name = os.environ.get("GEMINI_MODEL", "gemini-1.5-flash-latest")
+    model_name = os.environ.get("GEMINI_MODEL") or "gemini-1.5-flash-latest"
     model = genai.GenerativeModel(model_name)
 
     posts_json = json.dumps(posts, indent=2)[:22000]
@@ -845,6 +845,7 @@ def search_youtube(query, max_results=3):
     """Search YouTube for complaint-heavy videos and return ranked results."""
     api_key = os.environ.get("YOUTUBE_API_KEY", "")
     if not api_key:
+        print("  YouTube API key missing; skipping YouTube search.")
         return []
 
     try:
