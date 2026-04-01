@@ -282,8 +282,8 @@ def _post_to_dict(post, subreddit_name):
 
 
 def _rate_sleep():
-    base = float(os.environ.get("REDDIT_MIN_DELAY_SEC", "1.2"))
-    jitter = float(os.environ.get("REDDIT_JITTER_SEC", "0.8"))
+    base = float(os.environ.get("REDDIT_MIN_DELAY_SEC", "2.0"))
+    jitter = float(os.environ.get("REDDIT_JITTER_SEC", "1.5"))
     time.sleep(base + random.random() * jitter)
 
 
@@ -341,7 +341,7 @@ def fetch_top_comments_json(url, max_comments=5):
 
 
 def _fetch_with_backoff(url, headers=None, timeout=20, max_retries=3):
-    delay = float(os.environ.get("REDDIT_BACKOFF_SEC", "8"))
+    delay = float(os.environ.get("REDDIT_BACKOFF_SEC", "15"))
     for attempt in range(max_retries + 1):
         resp = requests.get(url, headers=headers, timeout=timeout)
         if resp.status_code != 429:
