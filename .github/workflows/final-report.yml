@@ -81,23 +81,11 @@ jobs:
           class NoRedirect(urllib.request.HTTPRedirectHandler):
               def redirect_request(self, req, fp, code, msg, headers, newurl):
                   return None
-          
-          class NoRedirect(urllib.request.HTTPRedirectHandler):
-              def redirect_request(self, req, fp, code, msg, headers, newurl):
-                  return None
 
           def api_get(url):
               req = urllib.request.Request(url, headers=headers)
               with urllib.request.urlopen(req) as r:
                   return json.load(r)
-          
-          class NoRedirect(urllib.request.HTTPRedirectHandler):
-              def redirect_request(self, req, fp, code, msg, headers, newurl):
-                  return None
-
-          class NoRedirect(urllib.request.HTTPRedirectHandler):
-              def redirect_request(self, req, fp, code, msg, headers, newurl):
-                  return None
 
           def download_artifact(workflow_file, artifact_name):
               runs = api_get(f"https://api.github.com/repos/{owner}/{repo}/actions/workflows/{workflow_file}/runs?branch=main&status=success&per_page=1")
@@ -148,6 +136,10 @@ jobs:
           repo = os.environ["GITHUB_REPOSITORY"].split("/")[1]
           token = os.environ.get("GH_TOKEN", "")
           headers = {"Authorization": f"Bearer {token}", "Accept": "application/vnd.github+json"}
+
+          class NoRedirect(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self, req, fp, code, msg, headers, newurl):
+                  return None
           
           def api_get(url):
               req = urllib.request.Request(url, headers=headers)
