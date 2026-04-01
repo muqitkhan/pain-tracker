@@ -443,11 +443,31 @@ def _normalize_gemini_model(name):
     return name if name.startswith("models/") else f"models/{name}"
 
 
+def _resolve_gemini_model():
+    # Prefer explicit config, but fall back to currently-supported models.
+    configured = _normalize_gemini_model(os.environ.get("GEMINI_MODEL") or "gemini-2.0-flash")
+    candidates = [configured, "models/gemini-2.0-flash", "models/gemini-1.5-flash"]
+    for name in candidates:
+        try:
+            genai.GenerativeModel(name)
+            return name
+        except Exception:
+            continue
+    try:
+        for m in genai.list_models():
+            methods = getattr(m, "supported_generation_methods", []) or []
+            if "generateContent" in methods:
+                return m.name
+    except Exception:
+        pass
+    return configured
+
+
 def analyze_with_gemini(posts, session):
     """Send top candidate posts to Gemini; returns list of top-10 problem dicts."""
     genai.configure(api_key=os.environ["GEMINI_API_KEY"])
-    model_name = os.environ.get("GEMINI_MODEL") or "gemini-1.5-flash-001"
-    model = genai.GenerativeModel(_normalize_gemini_model(model_name))
+    model_name = _resolve_gemini_model()
+    model = genai.GenerativeModel(model_name)
 
     posts_json = json.dumps(posts, indent=2)[:14000]
 

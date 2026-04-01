@@ -149,9 +149,27 @@ def analyze_patterns(reports):
     if not all_problems:
         return None
 
+    def _resolve_gemini_model():
+        configured = os.environ.get("GEMINI_MODEL") or "gemini-2.0-flash"
+        configured = configured if configured.startswith("models/") else f"models/{configured}"
+        candidates = [configured, "models/gemini-2.0-flash", "models/gemini-1.5-flash"]
+        for name in candidates:
+            try:
+                genai.GenerativeModel(name)
+                return name
+            except Exception:
+                continue
+        try:
+            for m in genai.list_models():
+                methods = getattr(m, "supported_generation_methods", []) or []
+                if "generateContent" in methods:
+                    return m.name
+        except Exception:
+            pass
+        return configured
+
     genai.configure(api_key=os.environ["GEMINI_API_KEY"])
-    model_name = os.environ.get("GEMINI_MODEL") or "gemini-1.5-flash-001"
-    model = genai.GenerativeModel(model_name if model_name.startswith("models/") else f"models/{model_name}")
+    model = genai.GenerativeModel(_resolve_gemini_model())
 
     data = json.dumps(all_problems, indent=2)[:22000]
 
