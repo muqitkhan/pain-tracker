@@ -5,11 +5,9 @@ on:
     # 8:30 PM America/Chicago can be UTC-5 (CDT) or UTC-6 (CST).
     - cron: "30 1 * * *"
     - cron: "30 2 * * *"
-  workflow_dispatch: {}
 
 permissions:
-  actions: write
-  contents: read
+  contents: write
 
 jobs:
   trigger-final:
@@ -23,5 +21,5 @@ jobs:
           curl -sS -X POST \
             -H "Authorization: Bearer ${GH_TOKEN}" \
             -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/workflows/final-report.yml/dispatches" \
-            -d '{"ref":"main"}'
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/dispatches" \
+            -d '{"event_type":"schedule_ping"}'

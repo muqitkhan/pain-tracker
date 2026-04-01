@@ -19,6 +19,9 @@ import sys
 import time
 import requests
 import random
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from datetime import datetime, timezone, timedelta
 from zoneinfo import ZoneInfo
 from xml.etree import ElementTree
@@ -567,6 +570,52 @@ def build_fallback_top(posts, n=10):
     return out
 
 
+def send_scrape_confirmation(session, today, coverage, total_posts, problems_count, youtube_hits, tiktok_hits):
+    """
+    Send a lightweight confirmation email after a scrape run.
+    """
+    if os.environ.get("SCRAPE_CONFIRM_EMAIL", "").lower() not in ("1", "true", "yes"):
+        return
+    required = ("GMAIL_ADDRESS", "GMAIL_APP_PASSWORD", "RECIPIENT_EMAIL")
+    if not all(os.environ.get(k) for k in required):
+        print("  Confirmation email skipped: Gmail secrets missing.")
+        return
+
+    ok_count    = sum(1 for s in coverage.values() if s == "ok")
+    empty_count = sum(1 for s in coverage.values() if s == "empty")
+    error_count = sum(1 for s in coverage.values() if s.startswith("error"))
+
+    subject = f"Scrape Confirmation — {session.title()} ({today})"
+    html = f"""
+    <html><body style="font-family:Arial,sans-serif;font-size:14px;color:#111;">
+      <h3 style="margin:0 0 8px;">Scrape Confirmation</h3>
+      <p style="margin:0 0 8px;"><strong>Session:</strong> {session.title()}<br/>
+      <strong>Date:</strong> {today}</p>
+      <ul style="margin:0 0 8px;padding-left:18px;">
+        <li>Total posts collected: <strong>{total_posts}</strong></li>
+        <li>Problem-signal posts analyzed: <strong>{problems_count}</strong></li>
+        <li>Coverage: <strong>{ok_count}</strong> ok · <strong>{empty_count}</strong> empty · <strong>{error_count}</strong> errors</li>
+        <li>Video hits: <strong>{youtube_hits}</strong> YouTube · <strong>{tiktok_hits}</strong> TikTok</li>
+      </ul>
+      <p style="margin:0;">This is an automated confirmation email.</p>
+    </body></html>
+    """.strip()
+
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = subject
+    msg["From"] = os.environ["GMAIL_ADDRESS"]
+    msg["To"] = os.environ["RECIPIENT_EMAIL"]
+    msg.attach(MIMEText(html, "html"))
+
+    try:
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            server.login(os.environ["GMAIL_ADDRESS"], os.environ["GMAIL_APP_PASSWORD"])
+            server.sendmail(os.environ["GMAIL_ADDRESS"], os.environ["RECIPIENT_EMAIL"], msg.as_string())
+        print("  Confirmation email sent.")
+    except Exception as exc:
+        print(f"  Confirmation email failed: {exc}")
+
+
 # ──────────────────────────────────────────────────────────────────────────────
 # YouTube search  (official Data API v3)
 # ──────────────────────────────────────────────────────────────────────────────
@@ -973,6 +1022,8 @@ def main():
 
     # ── Step 4: Video signals ─────────────────────────────────────────────────
     video_signals = []
+    yt_hits = 0
+    tt_hits = 0
     if top_10:
         print("\nSearching YouTube & TikTok for video signals...")
         video_signals = run_video_searches(top_10)
@@ -1010,6 +1061,17 @@ def main():
     out_path = f"reports/{today}-{session}.json"
     with open(out_path, "w") as f:
         json.dump(report, f, indent=2)
+
+    # Optional confirmation email per session.
+    send_scrape_confirmation(
+        session=session,
+        today=today,
+        coverage=coverage,
+        total_posts=len(all_posts),
+        problems_count=len(problem_posts),
+        youtube_hits=yt_hits if top_10 else 0,
+        tiktok_hits=tt_hits if top_10 else 0,
+    )
 
     # ── Step 6: Print summary ─────────────────────────────────────────────────
     print(f"\nReport saved → {out_path}")
