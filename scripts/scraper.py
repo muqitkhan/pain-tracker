@@ -341,7 +341,8 @@ def resolve_reddit_mode():
 def analyze_with_gemini(posts, session):
     """Send top candidate posts to Gemini; returns list of top-10 problem dicts."""
     genai.configure(api_key=os.environ["GEMINI_API_KEY"])
-    model = genai.GenerativeModel("gemini-1.5-flash")
+    model_name = os.environ.get("GEMINI_MODEL", "gemini-1.5-flash-latest")
+    model = genai.GenerativeModel(model_name)
 
     posts_json = json.dumps(posts, indent=2)[:22000]
 
@@ -457,6 +458,79 @@ Reddit posts to analyze:
             time.sleep(6)
 
     print("  WARNING: All Groq attempts failed. Returning empty list.")
+    return []
+
+
+def analyze_with_grok(posts, session):
+    """Use xAI Grok (OpenAI-compatible) for the same TOP-10 extraction."""
+    api_key = os.environ.get("XAI_API_KEY")
+    if not api_key:
+        print("  Grok not configured. Skipping Grok analysis.")
+        return []
+
+    model_name = os.environ.get("XAI_MODEL", "grok-2-1212")
+    url = "https://api.x.ai/v1/chat/completions"
+
+    posts_json = json.dumps(posts, indent=2)[:22000]
+    prompt = f"""You are a senior product researcher. From these Reddit posts, \
+identify the TOP 10 that describe a REAL, SPECIFIC problem a software product or app could solve.
+
+Session: {session.upper()}
+
+Scoring criteria (rank highest to lowest):
+1. Specificity — concrete problem, not vague venting
+2. Actionability — technology/software could realistically help
+3. Demand signal — high upvotes or comment count
+4. Diversity — prefer a variety of categories across the top 10
+
+Return ONLY a valid JSON array of exactly 10 objects. No markdown, no preamble, just JSON.
+
+Each object must have EXACTLY these fields:
+{{
+  "rank": 1,
+  "problem_summary": "One clear sentence describing the exact problem",
+  "category": "Finance | Productivity | Business | Education | Health | Consumer | Career | Other",
+  "severity": "High | Medium | Low",
+  "solution_hint": "What type of app or feature could fix this (1 sentence)",
+  "evidence_quote": "Most relevant verbatim quote from post or comment (max 130 chars)",
+  "source_url": "https://reddit.com/...",
+  "subreddit": "subreddit_name",
+  "post_title": "original post title",
+  "upvotes": 0,
+  "num_comments": 0,
+  "search_keywords": "3-6 keywords a frustrated person would type into YouTube or TikTok search (prefer TikTok-style phrasing like 'rant', 'POV', 'storytime' when relevant)"
+}}
+
+Reddit posts to analyze:
+{posts_json}"""
+
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "model": model_name,
+        "messages": [{"role": "user", "content": prompt}],
+        "temperature": 0.4,
+    }
+
+    for attempt in range(3):
+        try:
+            resp = requests.post(url, headers=headers, json=payload, timeout=40)
+            resp.raise_for_status()
+            data = resp.json()
+            text = (data.get("choices", [{}])[0].get("message", {}).get("content") or "").strip()
+            if "```" in text:
+                text = text.split("```")[1]
+                if text.startswith("json"):
+                    text = text[4:]
+            result = json.loads(text.strip())
+            return result if isinstance(result, list) else result.get("problems", [])
+        except Exception as exc:
+            print(f"  Grok attempt {attempt + 1} failed: {exc}")
+            time.sleep(6)
+
+    print("  WARNING: All Grok attempts failed. Returning empty list.")
     return []
 
 
@@ -889,6 +963,9 @@ def main():
     if not top_10 or len(top_10) < 10:
         print("WARNING: Gemini returned no usable problems. Trying Groq...")
         top_10 = analyze_with_groq(candidates, session)
+    if not top_10 or len(top_10) < 10:
+        print("WARNING: Groq returned no usable problems. Trying Grok...")
+        top_10 = analyze_with_grok(candidates, session)
     if not top_10 or len(top_10) < 10:
         print("WARNING: AI returned no usable problems. Falling back to top posts.")
         fallback_source = candidates if candidates else all_posts

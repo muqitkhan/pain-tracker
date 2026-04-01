@@ -147,6 +147,11 @@ Go to your repo → **Settings** → **Secrets and variables** → **Actions** �
 | `REDDIT_USERNAME` | Your Reddit username (without u/) |
 | `REDDIT_PASSWORD` | Your Reddit account password |
 | `GEMINI_API_KEY` | Your Gemini API key |
+| `GEMINI_MODEL` | Gemini model name (optional, e.g. `gemini-1.5-flash-latest`) |
+| `GROQ_API_KEY` | Groq API key *(optional)* |
+| `GROQ_MODEL` | Groq model name *(optional)* |
+| `XAI_API_KEY` | xAI Grok API key *(optional)* |
+| `XAI_MODEL` | xAI Grok model name *(optional)* |
 | `YOUTUBE_API_KEY` | Your YouTube Data API v3 key *(optional)* |
 | `GMAIL_ADDRESS` | Your full Gmail address |
 | `GMAIL_APP_PASSWORD` | The 16-char App Password |
