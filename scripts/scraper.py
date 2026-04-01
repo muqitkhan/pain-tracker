@@ -45,6 +45,23 @@ PROBLEM_SIGNALS = [
     "doesn't work", "not working", "keeps happening", "help me",
 ]
 
+# ── Pain-point keywords (higher precision signals) ───────────────────────────
+PAIN_KEYWORDS = [
+    # Frustration
+    "frustrated", "frustrating", "annoying", "hate", "rant",
+    # Struggle
+    "can't figure out", "why is it so hard", "stuck", "struggling",
+    "nobody tells you", "i don't understand", "confused",
+    # Need help
+    "advice needed", "please help", "what do i do", "desperate",
+    "lost", "overwhelmed", "don't know where to start",
+    # Failure
+    "failed", "gave up", "wasted money", "got scammed",
+    "regret", "mistake", "worst decision",
+    # Cost/time pain
+    "too expensive", "can't afford", "waste of time", "hours on this",
+]
+
 # ── Time windows ───────────────────────────────────────────────────────────────
 # Each session's "new" filter covers posts since the previous session ended.
 #
@@ -96,8 +113,10 @@ def get_reddit_client():
 
 
 def is_problem_post(post):
-    text = (post["title"] + " " + post["body"]).lower()
-    return any(kw in text for kw in PROBLEM_SIGNALS)
+    comments_text = " ".join(c.get("text", "") for c in post.get("top_comments", []))
+    text = (post["title"] + " " + post["body"] + " " + comments_text).lower()
+    keyword_hit = any(kw in text for kw in PROBLEM_SIGNALS) or any(kw in text for kw in PAIN_KEYWORDS)
+    return keyword_hit or engagement_score(post) >= 6
 
 
 def _clean_html_text(value):
@@ -139,6 +158,8 @@ def _rss_entry_to_post(entry, subreddit_name):
         "body": body,
         "score": 1,
         "num_comments": 0,
+        "upvote_ratio": 0.0,
+        "awards": 0,
         "url": post_url,
         "subreddit": subreddit_name,
         "created_utc": created_utc or 0,
@@ -159,6 +180,8 @@ def scrape_subreddit_rss(subreddit_name, since_utc=None, hot_limit=12, new_limit
         feeds = [
             (f"https://www.reddit.com/r/{subreddit_name}/hot/.rss", hot_limit, False),
             (f"https://www.reddit.com/r/{subreddit_name}/new/.rss", new_limit, True),
+            (f"https://www.reddit.com/r/{subreddit_name}/top/.rss?t=year", hot_limit, False),
+            (f"https://www.reddit.com/r/{subreddit_name}/top/.rss?t=all", hot_limit, False),
         ]
         for url, limit, time_filter in feeds:
             resp = _fetch_with_backoff(url, headers=headers, timeout=20)
@@ -188,6 +211,8 @@ def _listing_to_post(item, subreddit_name):
         "body": (data.get("selftext") or "")[:400].replace("\n", " "),
         "score": int(data.get("score", 0) or 0),
         "num_comments": int(data.get("num_comments", 0) or 0),
+        "upvote_ratio": float(data.get("upvote_ratio", 0) or 0),
+        "awards": int(data.get("total_awards_received", 0) or 0),
         "url": url,
         "subreddit": subreddit_name,
         "created_utc": float(data.get("created_utc", 0) or 0),
@@ -209,6 +234,8 @@ def scrape_subreddit_public_json(subreddit_name, since_utc=None, hot_limit=12, n
         feeds = [
             (f"https://www.reddit.com/r/{subreddit_name}/hot.json?limit={hot_limit}", False),
             (f"https://www.reddit.com/r/{subreddit_name}/new.json?limit={new_limit}", True),
+            (f"https://www.reddit.com/r/{subreddit_name}/top.json?t=year&limit={hot_limit}", False),
+            (f"https://www.reddit.com/r/{subreddit_name}/top.json?t=all&limit={hot_limit}", False),
         ]
         for url, time_filter in feeds:
             resp = _fetch_with_backoff(url, headers=headers, timeout=20)
@@ -219,6 +246,8 @@ def scrape_subreddit_public_json(subreddit_name, since_utc=None, hot_limit=12, n
                 post = _listing_to_post(item, subreddit_name)
                 if time_filter and since_utc and post["created_utc"] and post["created_utc"] < since_utc:
                     continue
+                if post["num_comments"] >= 50:
+                    post["top_comments"] = fetch_top_comments_json(post["url"], max_comments=5)
                 key = post["url"] or f"{subreddit_name}:{post['title']}"
                 seen[key] = post
             _rate_sleep()
@@ -243,6 +272,8 @@ def _post_to_dict(post, subreddit_name):
         "body": post.selftext[:400].replace("\n", " ") if post.selftext else "",
         "score": post.score,
         "num_comments": post.num_comments,
+        "upvote_ratio": float(getattr(post, "upvote_ratio", 0) or 0),
+        "awards": int(getattr(post, "total_awards_received", 0) or 0),
         "url": f"https://reddit.com{post.permalink}",
         "subreddit": subreddit_name,
         "created_utc": post.created_utc,
@@ -254,6 +285,59 @@ def _rate_sleep():
     base = float(os.environ.get("REDDIT_MIN_DELAY_SEC", "1.2"))
     jitter = float(os.environ.get("REDDIT_JITTER_SEC", "0.8"))
     time.sleep(base + random.random() * jitter)
+
+
+def engagement_score(post):
+    score = 0
+    if post.get("score", 0) >= 100:
+        score += 3
+    if post.get("num_comments", 0) >= 50:
+        score += 3
+    if post.get("upvote_ratio", 0) >= 0.85:
+        score += 1
+    if post.get("awards", 0) > 0:
+        score += 2
+    return score
+
+
+def _comments_url(url):
+    if not url:
+        return ""
+    if url.endswith(".json"):
+        return url
+    if "/comments/" in url:
+        return url.rstrip("/") + ".json"
+    return url
+
+
+def fetch_top_comments_json(url, max_comments=5):
+    if not url:
+        return []
+    headers = {
+        "User-Agent": "PainPointTracker/1.0 (comments json; contact: personal-use)",
+        "Accept": "application/json",
+    }
+    try:
+        resp = _fetch_with_backoff(_comments_url(url), headers=headers, timeout=20)
+        resp.raise_for_status()
+        payload = resp.json()
+        if not isinstance(payload, list) or len(payload) < 2:
+            return []
+        comments = payload[1].get("data", {}).get("children", [])
+        out = []
+        for item in comments:
+            data = item.get("data", {})
+            body = (data.get("body") or "").replace("\n", " ").strip()
+            if not body:
+                continue
+            out.append({
+                "text": body[:250],
+                "score": int(data.get("score", 0) or 0),
+            })
+        out.sort(key=lambda x: x.get("score", 0), reverse=True)
+        return out[:max_comments]
+    except Exception:
+        return []
 
 
 def _fetch_with_backoff(url, headers=None, timeout=20, max_retries=3):
@@ -301,6 +385,18 @@ def scrape_subreddit(reddit, subreddit_name, since_utc=None, hot_limit=12, new_l
                     continue
                 if post.id not in seen:
                     seen[post.id] = _post_to_dict(post, subreddit_name)
+
+        # — Top posts (year + all time) ────────────────────────────────────────
+        for post in sub.top(time_filter="year", limit=hot_limit):
+            if post.distinguished or post.score < 3:
+                continue
+            if post.id not in seen:
+                seen[post.id] = _post_to_dict(post, subreddit_name)
+        for post in sub.top(time_filter="all", limit=hot_limit):
+            if post.distinguished or post.score < 3:
+                continue
+            if post.id not in seen:
+                seen[post.id] = _post_to_dict(post, subreddit_name)
 
         time.sleep(1.2)  # Respect Reddit rate limits
 
@@ -1002,7 +1098,10 @@ def main():
 
     # ── Step 2: Pre-filter by problem signals ─────────────────────────────────
     problem_posts = [p for p in all_posts if is_problem_post(p)]
-    problem_posts.sort(key=lambda x: x["score"] + x["num_comments"] * 2, reverse=True)
+    problem_posts.sort(
+        key=lambda x: (x.get("score", 0) + x.get("num_comments", 0) * 2 + engagement_score(x) * 10),
+        reverse=True,
+    )
     candidates = problem_posts[:70]
     print(f"Problem-signal posts: {len(problem_posts)}")
     print(f"Sending top {len(candidates)} to Gemini...\n")
@@ -1032,6 +1131,19 @@ def main():
         print(f"  YouTube: {yt_hits}/{len(video_signals)} · TikTok: {tt_hits}/{len(video_signals)}")
 
     # ── Step 5: Save report ───────────────────────────────────────────────────
+    theme_frequency = {}
+    theme_subreddits = {}
+    for item in top_10:
+        summary = (item.get("problem_summary") or "").lower()
+        words = re.findall(r"[a-z0-9']+", summary)[:5]
+        if not words:
+            continue
+        key = " ".join(words)
+        theme_frequency[key] = theme_frequency.get(key, 0) + 1
+        subs = theme_subreddits.get(key, set())
+        subs.add(item.get("subreddit", ""))
+        theme_subreddits[key] = subs
+
     report = {
         "session":    session,
         "date":       today,
@@ -1055,6 +1167,13 @@ def main():
         "coverage":       coverage,         # full per-sub status map
         "top_10_problems": top_10,
         "video_signals":  video_signals,
+        "theme_frequency": {
+            k: {
+                "count": theme_frequency[k],
+                "subreddits": sorted(s for s in theme_subreddits[k] if s),
+            }
+            for k in theme_frequency
+        },
     }
 
     os.makedirs("reports", exist_ok=True)
