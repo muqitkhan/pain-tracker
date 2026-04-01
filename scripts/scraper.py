@@ -502,7 +502,7 @@ def analyze_with_groq(posts, session):
         print("  Groq not configured. Skipping Groq analysis.")
         return []
 
-    model_name = os.environ.get("GROQ_MODEL", "llama-3.1-8b-instant")
+    model_name = os.environ.get("GROQ_MODEL") or "llama-3.1-8b-instant"
     client = Groq(api_key=api_key)
 
     posts_json = json.dumps(posts, indent=2)[:22000]
