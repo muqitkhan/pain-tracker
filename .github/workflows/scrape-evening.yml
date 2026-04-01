@@ -5,6 +5,8 @@ on:
     # 6:00 PM America/Chicago can be either UTC-5 (CDT) or UTC-6 (CST).
     - cron: "0 23 * * *"
     - cron: "0 0 * * *"
+  repository_dispatch:
+    types: [test_run]
 
 permissions:
   contents: write
@@ -17,12 +19,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
-      - name: Guard - allow scheduled runs
+      - name: Guard - allow scheduled or test runs
         id: guard
         shell: bash
         run: |
           set -euo pipefail
-          if [ "${GITHUB_EVENT_NAME:-}" = "schedule" ]; then
+          if [ "${GITHUB_EVENT_NAME:-}" = "schedule" ] || [ "${GITHUB_EVENT_NAME:-}" = "repository_dispatch" ]; then
             echo "run=true" >> "$GITHUB_OUTPUT"
           else
             echo "run=false" >> "$GITHUB_OUTPUT"
