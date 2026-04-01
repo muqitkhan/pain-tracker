@@ -63,17 +63,93 @@ jobs:
 
       - name: Download morning reports
         if: steps.guard.outputs.run == 'true' && steps.secrets.outputs.run == 'true'
-        uses: actions/download-artifact@v4
-        with:
-          name: reports-morning
-          path: reports
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import urllib.request
+          import zipfile
+          from io import BytesIO
+          
+          owner = os.environ["GITHUB_REPOSITORY"].split("/")[0]
+          repo = os.environ["GITHUB_REPOSITORY"].split("/")[1]
+          token = os.environ.get("GH_TOKEN", "")
+          headers = {"Authorization": f"Bearer {token}", "Accept": "application/vnd.github+json"}
+          
+          def api_get(url):
+              req = urllib.request.Request(url, headers=headers)
+              with urllib.request.urlopen(req) as r:
+                  return json.load(r)
+          
+          def download_artifact(workflow_file, artifact_name):
+              runs = api_get(f"https://api.github.com/repos/{owner}/{repo}/actions/workflows/{workflow_file}/runs?branch=main&status=success&per_page=1")
+              if not runs.get("workflow_runs"):
+                  raise SystemExit(f"No successful runs found for {workflow_file}")
+              run_id = runs["workflow_runs"][0]["id"]
+              artifacts = api_get(f"https://api.github.com/repos/{owner}/{repo}/actions/runs/{run_id}/artifacts")
+              match = None
+              for a in artifacts.get("artifacts", []):
+                  if a.get("name") == artifact_name:
+                      match = a
+                      break
+              if not match:
+                  raise SystemExit(f"Artifact not found: {artifact_name}")
+              req = urllib.request.Request(match["archive_download_url"], headers=headers)
+              with urllib.request.urlopen(req) as r:
+                  data = r.read()
+              zf = zipfile.ZipFile(BytesIO(data))
+              os.makedirs("reports", exist_ok=True)
+              zf.extractall("reports")
+          
+          download_artifact("scrape-morning.yml", "reports-morning")
+          PY
 
       - name: Download evening reports
         if: steps.guard.outputs.run == 'true' && steps.secrets.outputs.run == 'true'
-        uses: actions/download-artifact@v4
-        with:
-          name: reports-evening
-          path: reports
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import urllib.request
+          import zipfile
+          from io import BytesIO
+          
+          owner = os.environ["GITHUB_REPOSITORY"].split("/")[0]
+          repo = os.environ["GITHUB_REPOSITORY"].split("/")[1]
+          token = os.environ.get("GH_TOKEN", "")
+          headers = {"Authorization": f"Bearer {token}", "Accept": "application/vnd.github+json"}
+          
+          def api_get(url):
+              req = urllib.request.Request(url, headers=headers)
+              with urllib.request.urlopen(req) as r:
+                  return json.load(r)
+          
+          def download_artifact(workflow_file, artifact_name):
+              runs = api_get(f"https://api.github.com/repos/{owner}/{repo}/actions/workflows/{workflow_file}/runs?branch=main&status=success&per_page=1")
+              if not runs.get("workflow_runs"):
+                  raise SystemExit(f"No successful runs found for {workflow_file}")
+              run_id = runs["workflow_runs"][0]["id"]
+              artifacts = api_get(f"https://api.github.com/repos/{owner}/{repo}/actions/runs/{run_id}/artifacts")
+              match = None
+              for a in artifacts.get("artifacts", []):
+                  if a.get("name") == artifact_name:
+                      match = a
+                      break
+              if not match:
+                  raise SystemExit(f"Artifact not found: {artifact_name}")
+              req = urllib.request.Request(match["archive_download_url"], headers=headers)
+              with urllib.request.urlopen(req) as r:
+                  data = r.read()
+              zf = zipfile.ZipFile(BytesIO(data))
+              os.makedirs("reports", exist_ok=True)
+              zf.extractall("reports")
+          
+          download_artifact("scrape-evening.yml", "reports-evening")
+          PY
 
       - name: Setup Python
         if: steps.guard.outputs.run == 'true' && steps.secrets.outputs.run == 'true'
