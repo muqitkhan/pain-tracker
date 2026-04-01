@@ -83,6 +83,14 @@ jobs:
               with urllib.request.urlopen(req) as r:
                   return json.load(r)
           
+          class NoRedirect(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self, req, fp, code, msg, headers, newurl):
+                  return None
+
+          class NoRedirect(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self, req, fp, code, msg, headers, newurl):
+                  return None
+
           def download_artifact(workflow_file, artifact_name):
               runs = api_get(f"https://api.github.com/repos/{owner}/{repo}/actions/workflows/{workflow_file}/runs?branch=main&status=success&per_page=1")
               if not runs.get("workflow_runs"):
@@ -98,15 +106,10 @@ jobs:
                   raise SystemExit(f"Artifact not found: {artifact_name}")
               # Follow redirect manually without auth header to avoid 401 on storage URL.
               req = urllib.request.Request(match["archive_download_url"], headers=headers)
-              opener = urllib.request.build_opener(urllib.request.HTTPHandler())
+              opener = urllib.request.build_opener(NoRedirect)
               try:
                   with opener.open(req) as r:
-                      if r.status in (301, 302, 303, 307, 308):
-                          url = r.headers.get("Location")
-                          with urllib.request.urlopen(url) as r2:
-                              data = r2.read()
-                      else:
-                          data = r.read()
+                      data = r.read()
               except urllib.error.HTTPError as e:
                   if e.code in (301, 302, 303, 307, 308):
                       url = e.headers.get("Location")
@@ -158,15 +161,10 @@ jobs:
                   raise SystemExit(f"Artifact not found: {artifact_name}")
               # Follow redirect manually without auth header to avoid 401 on storage URL.
               req = urllib.request.Request(match["archive_download_url"], headers=headers)
-              opener = urllib.request.build_opener(urllib.request.HTTPHandler())
+              opener = urllib.request.build_opener(NoRedirect)
               try:
                   with opener.open(req) as r:
-                      if r.status in (301, 302, 303, 307, 308):
-                          url = r.headers.get("Location")
-                          with urllib.request.urlopen(url) as r2:
-                              data = r2.read()
-                      else:
-                          data = r.read()
+                      data = r.read()
               except urllib.error.HTTPError as e:
                   if e.code in (301, 302, 303, 307, 308):
                       url = e.headers.get("Location")
