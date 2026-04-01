@@ -9,7 +9,7 @@ Key behaviours
     new  → time-filtered posts since the previous session ended (gap coverage)
 • Tracks coverage per community: ok / empty / error
 • After AI analysis, searches YouTube (official API) and TikTok (web scrape)
-  for the top 5 problems to surface video pain signals
+  for the top 10 problems to surface video pain signals
 """
 
 import json
@@ -515,12 +515,34 @@ def _youtube_search_queries(base_query):
     if not q:
         return []
     variants = [
+        q,
         f"{q} problem",
         f"{q} not working",
+        f"{q} complaint",
+        f"{q} review",
+        f"{q} scam",
         f"{q} rant",
         f"frustrated with {q}",
     ]
     # Preserve order while deduplicating.
+    return list(dict.fromkeys(variants))
+
+
+def _tiktok_search_queries(base_query):
+    """Build TikTok-style complaint queries (rant/POV/storytime) for better recall."""
+    q = base_query.strip()
+    if not q:
+        return []
+    variants = [
+        q,
+        f"{q} rant",
+        f"{q} POV",
+        f"{q} storytime",
+        f"{q} problem",
+        f"{q} not working",
+        f"{q} worst",
+        f"{q} scam",
+    ]
     return list(dict.fromkeys(variants))
 
 
@@ -694,54 +716,72 @@ def search_tiktok(query, max_results=3):
         "Referer": "https://www.google.com/",
     }
     try:
-        url = "https://www.tiktok.com/search?q=" + requests.utils.quote(query) + "&t=video"
-        resp = requests.get(url, headers=headers, timeout=15)
-        resp.raise_for_status()
-        html = resp.text
+        def _search_once(q):
+            url = "https://www.tiktok.com/search?q=" + requests.utils.quote(q) + "&t=video"
+            resp = requests.get(url, headers=headers, timeout=15)
+            resp.raise_for_status()
+            html = resp.text
 
-        marker = "__UNIVERSAL_DATA_FOR_REHYDRATION__"
-        if marker not in html:
-            print(f"  TikTok: rehydration marker not found for '{query}'")
-            return []
+            marker = "__UNIVERSAL_DATA_FOR_REHYDRATION__"
+            if marker not in html:
+                print(f"  TikTok: rehydration marker not found for '{q}'")
+                return []
 
-        start = html.index(marker) + len(marker)
-        start = html.index("{", start)          # jump to opening brace
-        end   = html.index("</script>", start)
-        data  = json.loads(html[start:end].rstrip(";"))
+            start = html.index(marker) + len(marker)
+            start = html.index("{", start)          # jump to opening brace
+            end   = html.index("</script>", start)
+            data  = json.loads(html[start:end].rstrip(";"))
 
-        results = []
+            results = []
 
-        def _walk(obj, depth=0):
-            # TikTok's rehydration blob is deeply nested; allow a bit more depth
-            # so we don't miss video nodes.
-            if depth > 20 or len(results) >= max_results:
-                return
-            if isinstance(obj, dict):
-                # Video items carry desc + author dict + id
-                if (
-                    isinstance(obj.get("author"), dict)
-                    and obj.get("id")
-                    and obj.get("desc")
-                ):
-                    author_id = obj["author"].get("uniqueId", "")
-                    vid_id    = obj["id"]
-                    if author_id and vid_id:
-                        stats = obj.get("stats", {})
-                        results.append({
-                            "title":   obj.get("desc", "")[:150],
-                            "channel": f"@{author_id}",
-                            "url":     f"https://www.tiktok.com/@{author_id}/video/{vid_id}",
-                            "views":   stats.get("playCount", 0),
-                            "likes":   stats.get("diggCount", 0),
-                        })
-                for v in obj.values():
-                    _walk(v, depth + 1)
-            elif isinstance(obj, list):
-                for item in obj:
-                    _walk(item, depth + 1)
+            def _walk(obj, depth=0):
+                # TikTok's rehydration blob is deeply nested; allow a bit more depth
+                # so we don't miss video nodes.
+                if depth > 20 or len(results) >= max_results:
+                    return
+                if isinstance(obj, dict):
+                    # Video items carry desc + author dict + id
+                    if (
+                        isinstance(obj.get("author"), dict)
+                        and obj.get("id")
+                        and obj.get("desc")
+                    ):
+                        author_id = obj["author"].get("uniqueId", "")
+                        vid_id    = obj["id"]
+                        if author_id and vid_id:
+                            stats = obj.get("stats", {})
+                            results.append({
+                                "title":   obj.get("desc", "")[:150],
+                                "channel": f"@{author_id}",
+                                "url":     f"https://www.tiktok.com/@{author_id}/video/{vid_id}",
+                                "views":   stats.get("playCount", 0),
+                                "likes":   stats.get("diggCount", 0),
+                            })
+                    for v in obj.values():
+                        _walk(v, depth + 1)
+                elif isinstance(obj, list):
+                    for item in obj:
+                        _walk(item, depth + 1)
 
-        _walk(data)
-        return results
+            _walk(data)
+            return results
+
+        combined = []
+        seen = set()
+        for q in _tiktok_search_queries(query):
+            for item in _search_once(q):
+                url = item.get("url")
+                if not url or url in seen:
+                    continue
+                seen.add(url)
+                combined.append(item)
+            time.sleep(0.4)
+
+        combined.sort(
+            key=lambda x: (x.get("views", 0), x.get("likes", 0)),
+            reverse=True,
+        )
+        return combined[:max_results]
 
     except Exception as exc:
         print(f"  TikTok scrape failed for '{query}': {type(exc).__name__}: {exc}")
@@ -753,17 +793,17 @@ def search_tiktok(query, max_results=3):
 # ──────────────────────────────────────────────────────────────────────────────
 
 def run_video_searches(top_problems):
-    """Search YouTube + TikTok for the top 5 problems using AI-generated keywords."""
+    """Search YouTube + TikTok for the top 10 problems using AI-generated keywords."""
     video_results = []
-    for problem in top_problems[:5]:
+    for problem in top_problems[:10]:
         rank     = problem.get("rank", "?")
         keywords = problem.get("search_keywords", problem.get("problem_summary", ""))[:80]
 
         print(f"  🎬 #{rank}: {keywords[:60]}...")
 
-        yt = search_youtube(keywords, max_results=3)
+        yt = search_youtube(keywords, max_results=10)
         time.sleep(1)
-        tt = search_tiktok(keywords, max_results=3)
+        tt = search_tiktok(keywords, max_results=10)
         time.sleep(2)
 
         video_results.append({
